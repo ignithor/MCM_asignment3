@@ -25,13 +25,22 @@ classdef cartesianControl < handle
             % bTg : goal frame
             % Outputs :
             % x_dot : cartesian reference for inverse kinematic control
-            cartesian_error = bTg(1:3,4) - gm.getToolTransformWrtBase();
+            bTt = gm.getToolTransformWrtBase();
+            cartesian_error = bTg(1:3,4) - bTt(1:3,4);
+            angular_error = RotToYPR(bTt(1:3,1:3)'*bTg(1:3,1:3));
+            error = [angular_error ; cartesian_error];
 
-            
-            x_dot = [0,0,0,0,0,0]
+            K = zeros(6);
+            K(1,1) = self.k_a;
+            K(2,2) = self.k_a;
+            K(3,3) = self.k_a;
+            K(4,4) = self.k_l;
+            K(5,5) = self.k_l;
+            K(6,6) = self.k_l;
 
+            x_dot = K * error;
+       
             
         end
     end
 end
-
