@@ -16,7 +16,7 @@ q0 = [0,0,0,0,0,0,0]';
 e_eta_t = [0,0,pi/10];
 e_O_t= [0.2,0,0]';
 eTt = eye(4);
-eTt(1:3,1:3) = YPRToRot(e_eta_t);
+eTt(1:3,1:3) = YPRToRot(e_eta_t(1), e_eta_t(2), e_eta_t(3));
 eTt(1:3,4) = e_O_t;
 
 %% Initialize Geometric Model (GM) and Kinematic Model (KM)
@@ -30,7 +30,7 @@ km = kinematicModel(gm);
 %% Compute trasformation of the tool w.r.t. the base frame
 % Update direct geometry given q=q0
 
-bTt = geometricModel.getToolTransformWrtBase();
+bTt = gm.getToolTransformWrtBase();
 
 disp("eTt");
 disp(eTt);
@@ -39,13 +39,13 @@ disp(bTt);
 
 %% Define the goal frame and initialize cartesian control
 % Goal definition 
-
-bOg = [-0.14; -0.85; 0.6]';
+b_O_g = [-0.14; -0.85; 0.6]';
 b_eta_g = [-3.02,-0.40,-1.33];
 
 bTg = eye(4);
-bTg(1:3,1:3) = YPRToRot(b_eta_g);
-bTg(1:3,4) = bOg;
+bTg(1:3,1:3) = YPRToRot(b_eta_g(1), b_eta_g(2), b_eta_g(3));
+bTg(1:3,4) = b_O_g;
+
 disp('bTg')
 disp(bTg)
 
@@ -107,11 +107,15 @@ plot3(bTg(1,4),bTg(2,4),bTg(3,4),'ro')
 %%%%%%% Kinematic Simulation %%%%%%%
 for i = t
     % Update geometric and kinematic model and use the cartesian control ... to do
-
+    gm.updateDirectGeometry(q);
+    km.updateJacobian();
+    disp('Jacobian');
+    disp(km.J);
+    x_dot = cc.getCartesianReference(bTg);
 
     %% INVERSE KINEMATIC
     % Compute desired joint velocities ... to do
-    q_dot = ...;
+    q_dot = pinv(km.J) * x_dot;
 
     % simulating the robot - implement KinematicSimulation
     q = KinematicSimulation(q, q_dot, dt, qmin, qmax);

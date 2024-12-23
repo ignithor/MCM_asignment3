@@ -46,32 +46,44 @@ classdef geometricModel < handle
             % The function updates:
             % - iTj: vector of matrices containing the transformation matrices from link i to link j for the input q.
             % The size of iTj is equal to (4,4,numberOfLinks)
-            self.q = q;
-            self.iTj = self.iTj_0;
-
-            for i=1:self.jointNumber
-                if self.jointType(i)
-                    % If prismatic joint
-                    T= [1,0,0,0;
-                        0,1,0,0;
-                        0,0,1,q(i);
-                        0,0,0,1];
-                elseif ~self.jointType(i)
-                    % If rotational joint
-                    cq = cos(q(i));
-                    sq = sin(q(i));
-                    T = [cq, -sq, 0, 0;
-                         sq, cq, 0, 0;
-                          0, 0, 1, 0;
-                         0, 0, 0, 1];
-
-                else
-                    error("Joint type not rotation or prismastic")
-                end
-                self.iTj(:,:,i) = self.iTj_0(:,:,i) * T;
-
+            % Step 1: Validate the input dimensions
+            if length(q) ~= self.jointNumber
+                error('The input q must have the same length as the number of joints.');
             end
-
+        
+            % Step 2: Update the joint positions
+            self.q = q;
+        
+            % Step 3: Initialize iTj using iTj_0 as the base transformation for q = 0
+            self.iTj = self.iTj_0;
+        
+            % Step 4: Iterate through each joint and update the transformation matrix
+            for i = 1:self.jointNumber
+                % Extract the joint type (0 for rotational, 1 for prismatic)
+                jointType = self.jointType(i);
+            
+                % Get the joint transformation matrix for the current joint position q(i)
+                if jointType == 0 % Rotational joint
+                    % Apply rotation about the z-axis by angle q(i)
+                    jointTransform = [cos(q(i)), -sin(q(i)), 0, 0;
+                                        sin(q(i)),  cos(q(i)), 0, 0;
+                                        0,          0,         1, 0;
+                                        0,          0,         0, 1];
+                elseif jointType == 1 % Prismatic joint
+                    % Apply translation along the z-axis by distance q(i)
+                    jointTransform = [1, 0, 0, 0;
+                                        0, 1, 0, 0;
+                                        0, 0, 1, q(i);
+                                        0, 0, 0, 1];
+                else
+                    error('Invalid joint type. Joint type must be 0 (rotational) or 1 (prismatic).');
+                end
+        
+                % Compute the cross product for the i-th joint
+                iTj = self.iTj(:, :, i);
+                new_iTj = iTj * jointTransform;
+                self.iTj(:, :, i) = new_iTj;
+            end
         end
         function [bTk] = getTransformWrtBase(self,k)
             %% GetTransformatioWrtBase function
@@ -80,14 +92,13 @@ classdef geometricModel < handle
             % outputs
             % bTk : transformation matrix from the manipulator base to the k-th joint in
             % the configuration identified by iTj.
-            if k < 0 || k > self.jointNumber
-                error('Joint index out of range');
-            end
-            
-            bTk = eye(4); % Start with identity matrix
-            
+            % Initialize the transformation matrix as the identity matrix
+            bTk = eye(4);
+        
+            % Loop through all joints from the base to the k-th joint
             for i = 1:k
-                bTk = bTk * self.iTj(:,:,i);
+                % Multiply the transformation matrices to accumulate the result
+                bTk = bTk * self.iTj(:, :, i);
             end
         end
         function [bTt] = getToolTransformWrtBase(self)
@@ -96,7 +107,8 @@ classdef geometricModel < handle
             % None 
             % bTt : transformation matrix from the manipulator base to the
             % tool
-            bTt = self.getTransformWrtBase(self.jointNumber)*self.eTt;
+            bTe = self.getTransformWrtBase(self.jointNumber);
+            bTt = bTe * self.eTt;
         end
     end
 end
