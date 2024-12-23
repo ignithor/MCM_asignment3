@@ -7,19 +7,15 @@ function [R] = YPRToRot(psi, theta, phi)
 % phi angle around x axis (phi)
 % Output:
 % R rotation matrix
-% Calculate individual rotation matrices for each angle
-Rz = [cos(psi), -sin(psi), 0;
-      sin(psi), cos(psi), 0;
-      0, 0, 1];
-  
-Ry = [cos(theta), 0, sin(theta);
-      0, 1, 0;
-      -sin(theta), 0, cos(theta)];
-  
-Rx = [1, 0, 0;
-      0, cos(phi), -sin(phi);
-      0, sin(phi), cos(phi)];
-  
-% Calculate the combined rotation matrix using Z-Y-X order
-R = Rz * Ry * Rx;
+R = zeros(3,3);
+R(1,1)=cos(psi)*cos(theta);
+R(1,2)=-sin(psi)*cos(phi)+cos(psi)*sin(theta)*sin(phi);
+R(1,3)=sin(psi)*sin(phi)+cos(psi)*cos(phi)*sin(theta);
+R(2,1)=sin(psi)*cos(theta);
+R(2,2)=cos(psi)*cos(phi)+sin(phi)*sin(theta)*sin(psi);
+R(2,3)=-cos(psi)*sin(phi)+sin(theta)*sin(psi)*cos(phi);
+R(3,1)=-sin(theta);
+R(3,2)=cos(theta)*sin(phi);
+R(3,3)=cos(theta)*cos(phi);
+
 end

@@ -80,9 +80,7 @@ classdef geometricModel < handle
                 end
         
                 % Compute the cross product for the i-th joint
-                iTj = self.iTj(:, :, i);
-                new_iTj = iTj * jointTransform;
-                self.iTj(:, :, i) = new_iTj;
+                self.iTj(:, :, i) = self.iTj(:, :, i) * jointTransform;
             end
         end
         function [bTk] = getTransformWrtBase(self,k)
@@ -93,11 +91,15 @@ classdef geometricModel < handle
             % bTk : transformation matrix from the manipulator base to the k-th joint in
             % the configuration identified by iTj.
             % Initialize the transformation matrix as the identity matrix
+
+            if k < 0 || k > self.jointNumber
+                error('Joint index out of range');
+            end
+
             bTk = eye(4);
         
             % Loop through all joints from the base to the k-th joint
             for i = 1:k
-                % Multiply the transformation matrices to accumulate the result
                 bTk = bTk * self.iTj(:, :, i);
             end
         end
@@ -107,8 +109,7 @@ classdef geometricModel < handle
             % None 
             % bTt : transformation matrix from the manipulator base to the
             % tool
-            bTe = self.getTransformWrtBase(self.jointNumber);
-            bTt = bTe * self.eTt;
+            bTt = self.getTransformWrtBase(self.jointNumber)*self.eTt;
         end
     end
 end
