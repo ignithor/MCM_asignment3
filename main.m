@@ -80,6 +80,7 @@ qmax(6) = 1;
 
 % list for data plot
 x_dot_hist = [];
+x_dot_hist_nn = [];
 t_hist = [];
 
 % Show simulation ? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -126,6 +127,7 @@ for i = t
     x_dot_actual = km.J*q_dot;
 
     x_dot_hist = [x_dot_hist; (x_dot_actual/norm(x_dot_actual))'];
+    x_dot_hist_nn = [x_dot_hist_nn; x_dot_actual'];
     t_hist = [t_hist; i];
 
     %% ... Plot the motion of the robot 
@@ -193,4 +195,10 @@ figure
 hold on;
 title('DIRECTION OF THE END-EFFECTOR VELOCITIES')
 plot(t_hist, x_dot_hist)
+legend('omega x', 'omega y', 'omega z', 'xdot', 'ydot', 'zdot')
+
+figure
+hold on;
+title('END-EFFECTOR VELOCITIES')
+plot(t_hist, x_dot_hist_nn)
 legend('omega x', 'omega y', 'omega z', 'xdot', 'ydot', 'zdot')
